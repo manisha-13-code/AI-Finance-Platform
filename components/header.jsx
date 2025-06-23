@@ -46,8 +46,8 @@ const Header = async () => {
                         <UserButton 
                         appearance={{
                             elements:{
-                                avatarBox: "w-10 h-10"
-                            }
+                                avatarBox: "w-10 h-10",
+                            },
                         }}
                         />
                     </SignedIn>
