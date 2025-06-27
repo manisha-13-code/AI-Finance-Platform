@@ -4,6 +4,7 @@ import { getAccountWithTransaction } from '@/actions/account'
 import { notFound } from 'next/navigation';
 import React from 'react'
 import TransactionTable from "../_components/transaction-table";
+import AccountChart from "../_components/account-chart";
 
 const AccountPage = async ({ params }) => {
   const { id } = params; // destructure safely
@@ -13,7 +14,7 @@ const AccountPage = async ({ params }) => {
     notFound();
   }
 
-  const { transaction, ...account } = accountData;
+  const { transactions, ...account } = accountData;
 
   return (
     <div className='px-10 space-y-8'>
@@ -29,10 +30,18 @@ const AccountPage = async ({ params }) => {
       </div>
       </div>
 
+      {/* Chart Section */}
       <Suspense
         fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
         >
-        <TransactionTable transaction={transaction} />
+        <AccountChart transactions={transactions} />
+      </Suspense>
+
+      {/* Transaction table */}
+      <Suspense
+        fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
+        >
+        <TransactionTable transactions={transactions} />
       </Suspense>
     </div>
   );
