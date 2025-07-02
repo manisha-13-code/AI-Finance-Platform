@@ -8,7 +8,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
       <HeroSection />
       <section className="py-20 bg-blue-50">
         <div className="container mx-auto px-4">
