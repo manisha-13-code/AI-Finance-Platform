@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { transactionSchema } from "@/lib/schema";
@@ -13,13 +13,24 @@ import CreateAccountDrawer from '@/components/create-account-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { cn } from "@/lib/utils";
 import { Switch } from '@/components/ui/switch';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import ReceiptScanner from './receipt-scanner';
 
 const AddTransactionForm = ({ accounts = [], categories = [] }) => {
-    const router = useRouter
-    const { register, setValue, handleSubmit, formState: { errors }, watch, getValues, reset } = useForm({
+    const router = useRouter();
+
+
+    const {
+        register,
+        setValue,
+        handleSubmit,
+        formState: { errors },
+        watch,
+        getValues,
+        reset,
+    } = useForm({
         resolver: zodResolver(transactionSchema),
         defaultValues: {
             date: new Date(),
@@ -28,7 +39,9 @@ const AddTransactionForm = ({ accounts = [], categories = [] }) => {
             accountId: accounts.find((ac) => ac.isDefault)?.id || "",
             description: "",
             isRecurring: false,
-        },
+            category: "", // Add this to avoid undefined
+            recurringInterval: undefined,
+        }
     });
 
     const {
@@ -41,20 +54,54 @@ const AddTransactionForm = ({ accounts = [], categories = [] }) => {
     const isRecurring = watch("isRecurring");
     const date = watch("date");
 
-    const onSubmit = (data) => {
+    const filteredCategories = categories.filter(
+        (category) => category.type === type
+    );
+
+    const onSubmit = async (data) => {
         const formData = {
             ...data,
             amount: parseFloat(data.amount),
-        }
+        };
         transactionFn(formData)
     }
 
-    const fileterdCategories = categories.filter(
-        (category) => category.type === type
-    )
+    useEffect(() => {
+        if (transactionResult?.success && !transactionLoading) {
+            toast.success("Transaction created successfully!");
+            reset();
+            router.push(`/account/${transactionResult.data.accountId}`);
+        }
+    }, [transactionResult, transactionLoading])
+
+    const handleScanComplete = (scannedData) => {
+        if (scannedData) {
+            setValue("amount", scannedData.amount.toString());
+            setValue("date", new Date(scannedData.date));
+
+            if (scannedData.description) {
+                setValue("description", scannedData.description);
+            }
+
+            if (scannedData.category) {
+                // Match category by name (case-insensitive) and get its ID
+                const matchedCategory = categories.find(
+                    (cat) => cat.name.toLowerCase() === scannedData.category.toLowerCase()
+                );
+                if (matchedCategory) {
+                    setValue("category", matchedCategory.id);
+                }
+            }
+
+            toast.success("Receipt scanned successfully");
+        }
+    };
 
     return (
         <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
+
+            {/* AI receipt scanner */}
+            <ReceiptScanner onScanComplete={handleScanComplete} />
             <div className='space-y-2'>
                 <label className='text-sm font-medium'>Type</label>
                 <Select
@@ -103,6 +150,15 @@ const AddTransactionForm = ({ accounts = [], categories = [] }) => {
                                     {account.name} (${parseFloat(account.balance).toFixed(2)})
                                 </SelectItem>
                             ))}
+
+                            <CreateAccountDrawer>
+                                <Button
+                                    variant="ghost"
+                                    className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                                >
+                                    Create Account
+                                </Button>
+                            </CreateAccountDrawer>
                         </SelectContent>
                     </Select>
                     {errors.accountId && (
@@ -121,19 +177,12 @@ const AddTransactionForm = ({ accounts = [], categories = [] }) => {
                         <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                        {fileterdCategories.map((category) => (
+                        {filteredCategories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                                 {category.name}
                             </SelectItem>
                         ))}
-                        <CreateAccountDrawer>
-                            <Button
-                                variant="ghost"
-                                className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                            >
-                                Create Account
-                            </Button>
-                        </CreateAccountDrawer>
+
                     </SelectContent>
                 </Select>
                 {errors.category && (
@@ -147,15 +196,12 @@ const AddTransactionForm = ({ accounts = [], categories = [] }) => {
                     <PopoverTrigger asChild>
                         <Button
                             variant="outline"
-                            className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !date && "text-muted-foreground"
-                            )}>
+                            className="w-full pl-3 text-left font-normal">
                             {date ? format(date, "PPP") : <span>Pick a date</span>}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="flex flex-cols w-auto p-0 z-50 bg-popover text-popover-foreground border rounded-md shadow-md">
+                    <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                             mode="single"
                             selected={date}
@@ -223,13 +269,12 @@ const AddTransactionForm = ({ accounts = [], categories = [] }) => {
                 </div>
             )}
 
-            <div className='space-x-2'>
+            <div className='flex gap-4'>
                 <Button
                     type="button"
                     variant="outline"
                     className="w-full"
-                    onClick={() => router.back()}
-                >
+                    onClick={() => router.back()}>
                     Cancel
                 </Button>
                 <Button type="submit" className="w-full" disabled={transactionLoading}>Create Transaction
