@@ -171,7 +171,7 @@ export async function scanReceipt(file) {
       throw new Error("Invalid response format from Gemini");
     }
   } catch (error) {
-    console.error("Error scanning receipt:", error);
+    console.error("Error scanning receipt:", error.message);
     throw new Error("Failed to scan receipt");
   }
 }

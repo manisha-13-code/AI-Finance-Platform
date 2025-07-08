@@ -39,28 +39,78 @@ const PREVIEW_DATA = {
 
 
 export default function EmailTemplate({
-  userName = "",
+  userName = "Manisha",
   type = "budget-alert",
   data = {},
 }) {
-  const percentageUsed =
-    typeof data?.percentageUsed === "number" ? data.percentageUsed.toFixed(2) : "N/A";
-
-  const budgetAmount =
-    typeof data?.budgetAmount === "number" ? data.budgetAmount.toFixed(2) : "0.00";
-
-  const totalExpenses =
-    typeof data?.totalExpenses === "number" ? data.totalExpenses.toFixed(2) : "0.00";
-
-  const remaining =
-    typeof data?.budgetAmount === "number" && typeof data?.totalExpenses === "number"
-      ? (data.budgetAmount - data.totalExpenses).toFixed(2)
-      : "0.00";
-
-      console.log(percentageUsed, budgetAmount, totalExpenses, remaining);
 
   if (type === "monthly-report") {
-    return null; // Placeholder for monthly-report logic
+     return (
+      <Html>
+        <Head />
+        <Preview>Your Monthly Financial Report</Preview>
+        <Body style={styles.body}>
+          <Container style={styles.container}>
+            <Heading style={styles.title}>Monthly Financial Report</Heading>
+
+            <Text style={styles.text}>Hello {userName},</Text>
+            <Text style={styles.text}>
+              Here&rsquo;s your financial summary for {data?.month}:
+            </Text>
+
+            {/* Main Stats */}
+            <Section style={styles.statsContainer}>
+              <div style={styles.stat}>
+                <Text style={styles.text}>Total Income</Text>
+                <Text style={styles.heading}>${data?.stats.totalIncome.toFixed(2)}</Text>
+              </div>
+              <div style={styles.stat}>
+                <Text style={styles.text}>Total Expenses</Text>
+                <Text style={styles.heading}>${data?.stats.totalExpenses.toFixed(2)}</Text>
+              </div>
+              <div style={styles.stat}>
+                <Text style={styles.text}>Net</Text>
+                <Text style={styles.heading}>
+                  ${data?.stats.totalIncome.toFixed(2) - data?.stats.totalExpenses.toFixed(2)}
+                </Text>
+              </div>
+            </Section>
+
+            {/* Category Breakdown */}
+            {data?.stats?.byCategory && (
+              <Section style={styles.section}>
+                <Heading style={styles.heading}>Expenses by Category</Heading>
+                {Object.entries(data?.stats.byCategory).map(
+                  ([category, amount]) => (
+                    <div key={category} style={styles.row}>
+                      <Text style={styles.text}>{category}</Text>
+                      <Text style={styles.text}>${amount}</Text>
+                    </div>
+                  )
+                )}
+              </Section>
+            )}
+
+            {/* AI Insights */}
+            {data?.insights && (
+              <Section style={styles.section}>
+                <Heading style={styles.heading}>Welth Insights</Heading>
+                {data.insights.map((insight, index) => (
+                  <Text key={index} style={styles.text}>
+                    • {insight}
+                  </Text>
+                ))}
+              </Section>
+            )}
+
+            <Text style={styles.footer}>
+              Thank you for using Welth. Keep tracking your finances for better
+              financial health!
+            </Text>
+          </Container>
+        </Body>
+      </Html>
+    );
   }
 
   if (type === "budget-alert") {
@@ -74,20 +124,20 @@ export default function EmailTemplate({
 
             <Text style={styles.text}>Hello {userName},</Text>
             <Text style={styles.text}>
-              You’ve used {percentageUsed}% of your budget for this month.
+              You’ve used {data?.percentageUsed.toFixed(2)}% of your budget for this month.
             </Text>
             <Section style={styles.statsContainer}>
               <div style={styles.stat}>
                 <Text style={styles.text}>Budget Amount</Text>
-                <Text style={styles.heading}>${budgetAmount}</Text>
+                <Text style={styles.heading}>${data?.budgetAmount}</Text>
               </div>
               <div style={styles.stat}>
                 <Text style={styles.text}>Spent So Far</Text>
-                <Text style={styles.heading}>${totalExpenses}</Text>
+                <Text style={styles.heading}>${data?.totalExpenses}</Text>
               </div>
               <div style={styles.stat}>
                 <Text style={styles.text}>Remaining</Text>
-                <Text style={styles.heading}>${remaining}</Text>
+                <Text style={styles.heading}>${data?.budgetAmount - data?.totalExpenses}</Text>
               </div>
             </Section>
           </Container>

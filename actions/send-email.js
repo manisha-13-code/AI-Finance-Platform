@@ -15,5 +15,4 @@ export async function sendEmail({to, subject, react }) {
     console.error("Failed to send email:", error);
     return { success: false, error };
   }
-
 }
